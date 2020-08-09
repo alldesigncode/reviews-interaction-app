@@ -22,6 +22,7 @@ export class ReviewListComponent implements OnInit, AfterViewInit {
   count = 0;
 
   @Output() calculatedWidth = new EventEmitter<string>();
+  @Output() btnDisabled = new EventEmitter<boolean>();
   @Input() data?: any[] = [];
 
   tl = gsap.timeline();
@@ -40,49 +41,62 @@ export class ReviewListComponent implements OnInit, AfterViewInit {
   }
 
   selectItem(item: HTMLElement, index: number) {
-    console.log(item);
-
     // const activeElIndex = this.elementList.findIndex(
     //   (el) => el && el.classList && el.classList.contains('active')
     // );
-    // const translateValue = `${
-    //   (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin) *
-    //   (this.numberOfItemsShown - index - 1)
-    // }px`;
+    const translateValue = `${
+      (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin) *
+      (this.numberOfItemsShown - index - 1)
+    }px`;
 
-    // this.elementList.forEach((element, ind) => {
-    //   if (
-    //     element &&
-    //     element.classList &&
-    //     element.classList.contains('active')
-    //   ) {
-    //     element.classList.remove('active');
-    //     item.classList.add('active');
+    this.elementList.forEach((element, itemInd) => {
+      const prop = gsap.getProperty(element, 'translateX');
+      if (prop < 0) {
+        gsap.to(element, {
+          duration: 0.5,
+          translateX: `${typeof prop === 'number' && (prop + (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin))}px`
+        });
+      } else {
+        gsap.to(element, {
+          duration: 0.5,
+          translateX: translateValue,
+        });
+      }
+    });
+
+    // setTimeout(() => {
+    // // after 500 miliseconds move remaning half in negative
+    // for (let i = index + 1; i <= this.elementList.length - 1; i++) {
+    //   const prop2 = gsap.getProperty(this.elementList[i], 'translateX');
+    //   if (prop2 < 0) {
+    //     return;
+    //   } else {
+    //   gsap.to(this.elementList[i], {
+    //     duration: 0,
+    //     translateX: `-${(this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin) * (index + 1)}px`
+    //   });
+    // }
+    //   this.list.nativeElement.children[this.getActiveElement().activeElementIndex].classList.remove('active');
+    //   this.list.nativeElement.children[index].classList.add('active');
+    //   this.cdr.detectChanges();
     //   }
-    //   gsap.to(element, {
-    //     duration: 1,
-    //     translateX: translateValue,
-    //   });
-    //   this.tl.to(this.elementList[activeElIndex], {
-    //     duration: 0.5,
-    //     height: this.dataListSizes.listItemHeight,
-    //   });
-    // });
+
+    // }, 500);
+
+
+
   }
 
   /*
-  move elements first
-  translated last element to the beggining
-  do prepend
+
   */
-
   goNext() {
-
-    this.count++;
+    this.btnDisabled.emit(true);
     const translateValue = (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin);
     this.elementList.forEach((elem) => {
       const prop = gsap.getProperty(elem, 'translateX');
       if (prop < 0) {
+        // continue translating in negative values
         gsap.to(elem, {
           duration: 0.5,
           translateX: `${(prop as number) + translateValue}px`
@@ -104,10 +118,12 @@ export class ReviewListComponent implements OnInit, AfterViewInit {
             } else {
               console.log(this.getActiveElement().activeElementIndex, this.getActiveElement().activeElement);
               // positioning currently active element to negative position after all moving items complete.
+              // and then remove active class
               gsap.to(this.getActiveElement().activeElement, {
                 // duration: 0,
                 translateX: `-${(this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin) * (this.getActiveElement().activeElementIndex)}px`,
               });
+
             }
             this.cdr.detectChanges();
           }
@@ -117,6 +133,11 @@ export class ReviewListComponent implements OnInit, AfterViewInit {
 
     });
 
+    this.changeActiveElement();
+  }
+
+
+  private changeActiveElement(): void {
     setTimeout(() => {
       // this.list.nativeElement.prepend(this.list.nativeElement.children[this.getActiveElement().activeElementIndex]);
       if (this.getActiveElement().activeElementIndex === 0) {
@@ -130,8 +151,6 @@ export class ReviewListComponent implements OnInit, AfterViewInit {
       }
       this.cdr.detectChanges();
     }, 600);
-
-
   }
 
   /**
