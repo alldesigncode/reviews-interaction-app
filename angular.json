@@ -123,6 +123,10 @@
           }
         }
       }
-    }},
-  "defaultProject": "reviews-interaction-app"
+    }
+  },
+  "defaultProject": "reviews-interaction-app",
+  "cli": {
+    "analytics": false
+  }
 }

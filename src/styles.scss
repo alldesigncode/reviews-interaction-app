@@ -1,1 +1,96 @@
 /* You can add global styles to this file, and also import other style files */
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  box-sizing: inherit;
+  line-height: 1.6;
+  overflow: hidden;
+}
+
+/* reviews container layout setup */
+rv-reviews {
+  display: grid;
+  padding: 30px 0;
+  grid-template-columns: [reviews-start] 1fr [reviews-end] minmax(60px, min-content) [detail-start] 400px [detail-end];
+  grid-template-rows: repeat(4, calc(25vh - 15px)); // -15px - subtract container padding
+
+  .reviews {
+    grid-column: reviews-start / reviews-end;
+    grid-row: 1 / -1;
+  }
+
+  .detail,
+  .actions { grid-column: detail-start / detail-end; }
+
+  .detail { grid-row: 1 / 4; }
+  .actions { grid-row: 4 / -1; }
+}
+
+
+.reviews {
+  display: grid;
+  grid-template-rows: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
+  overflow: hidden;
+
+  .count-box {
+    grid-row: 2 / 3;
+    grid-column: 1 / 2;
+    justify-self: center;
+    margin-top: -15px;
+
+    span {
+      font-size: 16px;
+      font-weight: bold;
+    }
+  }
+
+  .heading {
+    grid-row: 2 / 3;
+    grid-column: 2 / 3;
+    align-self: start;
+    margin-top: 50px;
+
+    .heading-3 {
+      transform: rotate(90deg);
+      display: inline-block;
+      font-weight: bold;
+      font-size: 24px;
+    }
+  }
+
+  rv-review-list {
+    grid-row: 3 / -1;
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    // transform: translateX(-90px);
+    position: relative;
+
+    .list {
+      display: flex;
+      flex: 0 0 100%;
+
+      &__item {
+        background-color: #ccc;
+        width: 250px;
+        margin: 0 20px;
+        cursor: pointer;
+      }
+
+    }
+
+  }
+}

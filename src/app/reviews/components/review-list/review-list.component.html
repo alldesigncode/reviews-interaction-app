@@ -1,0 +1,5 @@
+<div class="list" #list>
+  <ng-container *ngFor="let item of data; let i = index">
+    <div class="list__item" #itemRef (click)="selectItem(itemRef, i)">{{item.name}}</div>
+  </ng-container>
+</div>
