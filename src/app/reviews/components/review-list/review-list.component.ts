@@ -100,7 +100,7 @@ export class ReviewListComponent implements OnInit, AfterViewInit {
               gsap.to(this.getActiveElement().activeElement, {
                 // duration: 0,
                 translateX: `0px`
-              });
+              }); //
             } else {
               console.log(this.getActiveElement().activeElementIndex, this.getActiveElement().activeElement);
               // positioning currently active element to negative position after all moving items complete.
