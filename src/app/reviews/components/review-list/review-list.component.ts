@@ -18,7 +18,7 @@ import { gsap } from 'gsap';
 })
 export class ReviewListComponent implements OnInit, AfterViewInit {
   @ViewChild('list', { static: true }) list: ElementRef<HTMLDivElement>;
-  numberOfItemsShown = 6;
+  numberOfItemsShown = 4;
   count = 0;
 
   @Output() calculatedWidth = new EventEmitter<string>();
@@ -29,7 +29,6 @@ export class ReviewListComponent implements OnInit, AfterViewInit {
 
   constructor(
     private hostElement: ElementRef<HTMLElement>,
-    private zone: NgZone,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -37,32 +36,35 @@ export class ReviewListComponent implements OnInit, AfterViewInit {
 
   ngAfterViewInit() {
     this.itemsToDisplay(this.numberOfItemsShown);
-    this.initializeActiveElement();
+    this.initializeTranslateQueue();
   }
 
-  selectItem(item: HTMLElement, index: number) {
+  selectItem(item: HTMLElement, index: number, actualItem) {
+    console.log(item, index);
+
+
     // const activeElIndex = this.elementList.findIndex(
     //   (el) => el && el.classList && el.classList.contains('active')
     // );
-    const translateValue = `${
-      (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin) *
-      (this.numberOfItemsShown - index - 1)
-    }px`;
+    // const translateValue = `${
+    //   (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin) *
+    //   (this.numberOfItemsShown - index - 1)
+    // }px`;
 
-    this.elementList.forEach((element, itemInd) => {
-      const prop = gsap.getProperty(element, 'translateX');
-      if (prop < 0) {
-        gsap.to(element, {
-          duration: 0.5,
-          translateX: `${typeof prop === 'number' && (prop + (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin))}px`
-        });
-      } else {
-        gsap.to(element, {
-          duration: 0.5,
-          translateX: translateValue,
-        });
-      }
-    });
+    // this.elementList.forEach((element, itemInd) => {
+    //   const prop = gsap.getProperty(element, 'translateX');
+    //   if (prop < 0) {
+    //     gsap.to(element, {
+    //       duration: 0.5,
+    //       translateX: `${typeof prop === 'number' && (prop + (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin))}px`
+    //     });
+    //   } else {
+    //     gsap.to(element, {
+    //       duration: 0.5,
+    //       translateX: translateValue,
+    //     });
+    //   }
+    // });
 
     // setTimeout(() => {
     // // after 500 miliseconds move remaning half in negative
@@ -91,66 +93,65 @@ export class ReviewListComponent implements OnInit, AfterViewInit {
 
   */
   goNext() {
-    this.btnDisabled.emit(true);
+    // gsap.to(this.list.nativeElement.children[this.getActiveElement().activeElementIndex], {
+    //   height: this.dataListSizes.listItemHeight,
+    //   translateY: 0,
+    //   opacity: 0,
+    //   background: '#ccc'
+    // });
+    // gsap.to(this.list.nativeElement.children[this.getActiveElement().activeElementIndex - 1], {
+    //   height: 500,
+    //   translateY: '-210px',
+    //   background: '#1e1e1e',
+    // });
+
+
     const translateValue = (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin);
     this.elementList.forEach((elem) => {
-      const prop = gsap.getProperty(elem, 'translateX');
+      const prop = typeof gsap.getProperty(elem, 'translateX') === 'number' && gsap.getProperty(elem, 'translateX');
       if (prop < 0) {
-        // continue translating in negative values
+        // continue translating elements in negative position
         gsap.to(elem, {
           duration: 0.5,
-          translateX: `${(prop as number) + translateValue}px`
-        });
-      } else {
-        // translate all the elements first
-        gsap.to(elem, {
-          duration: 0.5,
-          translateX: (prop as number) > 0 ? `${(prop as number) + translateValue}px` : `${translateValue}px`,
+          translateX: `${prop + translateValue}px`,
           onComplete: () => {
-            /* translation complete */
-            if (this.getActiveElement().activeElementIndex === 0) {
-              // if index is 0, we have reached the end. now we want to reset translation to 0
-              console.log(this.getActiveElement().activeElementIndex, this.getActiveElement().activeElement);
-              gsap.to(this.getActiveElement().activeElement, {
-                // duration: 0,
-                translateX: `0px`
-              });
-            } else {
-              console.log(this.getActiveElement().activeElementIndex, this.getActiveElement().activeElement);
-              // positioning currently active element to negative position after all moving items complete.
-              // and then remove active class
-              gsap.to(this.getActiveElement().activeElement, {
-                // duration: 0,
-                translateX: `-${(this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin) * (this.getActiveElement().activeElementIndex)}px`,
-              });
-
-            }
-            this.cdr.detectChanges();
+            // translate queued element to the beggining
+            gsap.to(this.translateElementQueue().activeElement, {
+              duration: 0,
+              translateX: `-${translateValue
+                 * ((this.data.length - this.numberOfItemsShown) + this.translateElementQueue().activeElementIndex)}px`,
+            });
           }
         });
+      } else {
+        // translate elements in normal position
+        gsap.to(elem, {
+          duration: 0.5,
+          translateX: `${prop + translateValue}px`,
+        });
       }
-
-
     });
 
-    this.changeActiveElement();
+    this.changeTranslateElementQueue();
   }
 
 
-  private changeActiveElement(): void {
+  private changeTranslateElementQueue(): void {
     setTimeout(() => {
-      // this.list.nativeElement.prepend(this.list.nativeElement.children[this.getActiveElement().activeElementIndex]);
-      if (this.getActiveElement().activeElementIndex === 0) {
-        // reset active element to what it was initially
-        this.list.nativeElement.children[this.getActiveElement().activeElementIndex].classList.remove('active');
-        this.list.nativeElement.children[this.numberOfItemsShown - 1].classList.add('active');
+      if (this.translateElementQueue().activeElementIndex === 0) {
+        // reset queued element to what it was initially
+        this.list.nativeElement.children[this.translateElementQueue().activeElementIndex].classList.remove('translate-queue');
+        this.list.nativeElement.children[this.data.length - 1].classList.add('translate-queue');
+        this.btnDisabled.emit(false);
       } else {
-        this.list.nativeElement.children[this.getActiveElement().activeElementIndex - 1].classList.add('active');
-        this.list.nativeElement.children[this.getActiveElement().activeElementIndex].classList.remove('active');
-
+        // change queue
+        this.list.nativeElement.children[this.translateElementQueue().activeElementIndex - 1].classList.add('translate-queue');
+        this.list.nativeElement.children[this.translateElementQueue().activeElementIndex].classList.remove('translate-queue');
+        this.btnDisabled.emit(false);
       }
       this.cdr.detectChanges();
     }, 600);
+
   }
 
   /**
@@ -169,10 +170,29 @@ export class ReviewListComponent implements OnInit, AfterViewInit {
     this.calculatedWidth.emit(calculatedWidth);
     this.hostElement.nativeElement.style.width = calculatedWidth;
   }
-  private initializeActiveElement(): void {
-    if (!this.getActiveElement().isActive) {
-      const element = this.elementList[this.numberOfItemsShown - 1] as HTMLElement;
-      element.classList.add('active');
+  private initializeTranslateQueue(): void {
+    if (!this.translateElementQueue().isActive) {
+      const element = this.elementList[this.data.length - 1] as HTMLElement;
+      const translateValue = `-${
+        (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin) *
+        (this.data.length - this.numberOfItemsShown)
+      }px`;
+      element.classList.add('translate-queue');
+      this.elementList.forEach((el) =>
+        gsap.to(el, {
+          duration: 0,
+          translateX: translateValue,
+        })
+      );
+      // gsap.to(this.elementList[this.data.length - 1], {
+      //   height: 500,
+      //   translateY: '-210px'
+      // });
+
+    // gsap.to(this.translateElementQueue().activeElement, {
+    //   height: 500,
+    //   translateY: '-210px'
+    // });
       // this.tl.to(element, {
       //   duration: 0,
       //   position: 'absolute',
@@ -184,7 +204,7 @@ export class ReviewListComponent implements OnInit, AfterViewInit {
       // });
     }
   }
-  private getActiveElement(): { isActive: boolean; activeElement: HTMLElement, activeElementIndex: number } {
+  private translateElementQueue(): { isActive: boolean; activeElement: HTMLElement, activeElementIndex: number } {
     let obj: any = {
        isActive: false,
        activeElement: null,
@@ -194,10 +214,10 @@ export class ReviewListComponent implements OnInit, AfterViewInit {
       if (node && node.classList) {
        obj = {
         ...obj,
-        isActive: node.classList.contains('active'),
+        isActive: node.classList.contains('translate-queue'),
        };
       }
-      if (node && node.classList && node.classList.contains('active')) {
+      if (node && node.classList && node.classList.contains('translate-queue')) {
         obj = {
           ...obj,
           activeElement: node,

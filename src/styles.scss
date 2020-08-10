@@ -82,13 +82,20 @@ rv-reviews {
     .list {
       display: flex;
       flex: 0 0 100%;
+      position: absolute;
+      bottom: 0;
+      top: 0;
+      // transform: translateX(-85px);
 
       &__item {
         background-color: #ccc;
         width: 250px;
         margin: 0 20px;
         cursor: pointer;
+
       }
+
+
 
     }
 

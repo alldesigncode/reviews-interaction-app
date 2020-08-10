@@ -10,6 +10,7 @@ import { ReviewListComponent } from '../review-list/review-list.component';
 export class ReviewsComponent implements OnInit {
   data$: Observable<any[]>;
   calculatedWidth: string;
+  disabled: boolean;
   @ViewChild(ReviewListComponent) revComponent: ReviewListComponent;
 
   constructor(private cdr: ChangeDetectorRef) {}
@@ -24,7 +25,12 @@ export class ReviewsComponent implements OnInit {
   }
 
   next() {
-    this.revComponent.goNext();
+      this.revComponent.btnDisabled.emit(true);
+      this.revComponent.goNext();
+  }
+
+  onDisabe(event) {
+    this.disabled = event;
   }
 
   public getMockData(): Observable<any[]> {
@@ -55,6 +61,11 @@ export class ReviewsComponent implements OnInit {
             id: 6,
             name: 'item 6',
           },
+          {
+            id: 7,
+            name: 'item 7',
+          },
+
         ]);
       });
     });
