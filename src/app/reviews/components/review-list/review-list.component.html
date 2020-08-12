@@ -1,5 +1,17 @@
 <div class="list" #list>
   <ng-container *ngFor="let item of data; let i = index">
-    <div class="list__item" #itemRef (click)="selectItem(itemRef, i, item)">{{item.name}}</div>
+    <figure
+      class="list__item"
+      #itemRef
+      (click)="selectItem(i)"
+      [ngStyle]="(disabled || stabilizing) && { pointerEvents: 'none' }"
+    >
+      <ng-container *ngIf="item.url">
+        <img src="{{item.url}}" alt="">
+      </ng-container>
+      <figcaption class="list__item--text">
+        {{ item.name }}
+      </figcaption>
+    </figure>
   </ng-container>
 </div>

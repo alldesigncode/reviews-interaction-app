@@ -1,6 +1,9 @@
-<div class="reviews" [ngStyle]="{width: calculatedWidth}">
+<div class="reviews" [ngStyle]="{ width: calculatedWidth }">
   <div class="count-box">
-    <span> 02 / 05 </span>
+    <span>
+      02 / {{ (data$ | async)?.length < 10 ? "0" : ""
+      }}{{ (data$ | async)?.length }}
+    </span>
   </div>
   <div class="heading">
     <h3 class="heading-3">Reviews</h3>
@@ -9,11 +12,12 @@
     <rv-review-list
       [data]="data"
       (calculatedWidth)="onCalculatedWidth($event)"
+      (stabilizingElements)="onStabilize($event)"
       (btnDisabled)="onDisabe($event)"
     ></rv-review-list>
   </ng-container>
 </div>
 <div class="detail"></div>
 <div class="actions">
-  <button (click)="next()" [disabled]="disabled">next</button>
+  <button (click)="next()" [disabled]="disabled || stabilizing">next</button>
 </div>

@@ -8,226 +8,288 @@ import {
   Output,
   EventEmitter,
   ChangeDetectorRef,
-  NgZone,
+  OnDestroy,
 } from '@angular/core';
-import { gsap } from 'gsap';
+import { gsap, Expo } from 'gsap';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { Sizes } from '../../models/sizes';
+
 @Component({
   selector: 'rv-review-list',
   templateUrl: './review-list.component.html',
   styleUrls: ['./review-list.component.scss'],
 })
-export class ReviewListComponent implements OnInit, AfterViewInit {
+export class ReviewListComponent implements OnInit, AfterViewInit, OnDestroy {
+  destroyed$ = new Subject<void>();
   @ViewChild('list', { static: true }) list: ElementRef<HTMLDivElement>;
-  numberOfItemsShown = 4;
-  count = 0;
+  disabled = false;
+  stabilizing = false;
+
+  /* we can manually change how many
+     elements should be shown on page */
+  numberOfElementsShown = 4;
 
   @Output() calculatedWidth = new EventEmitter<string>();
   @Output() btnDisabled = new EventEmitter<boolean>();
-  @Input() data?: any[] = [];
+  @Output() stabilizingElements = new EventEmitter<boolean>();
 
-  tl = gsap.timeline();
+  @Input() data: any[] = [];
 
   constructor(
     private hostElement: ElementRef<HTMLElement>,
     private cdr: ChangeDetectorRef
   ) {}
 
-  ngOnInit(): void {}
+  ngOnInit(): void {
+    this.btnDisabled
+      .asObservable()
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe((disabled) => (this.disabled = disabled));
+
+    this.stabilizingElements
+      .asObservable()
+      .pipe(takeUntil(this.destroyed$))
+      .subscribe((stabilizing) => (this.stabilizing = stabilizing));
+  }
 
   ngAfterViewInit() {
-    this.itemsToDisplay(this.numberOfItemsShown);
-    this.initializeTranslateQueue();
+    this.elementsToDisplay(this.numberOfElementsShown);
+    this.initializeElements();
   }
 
-  selectItem(item: HTMLElement, index: number, actualItem) {
-    console.log(item, index);
+  moveElementsOpposite(selectedIndex: number) {
+    const translateValue = `-${
+      (this.sizes.listItemWidth + this.sizes.listItemMargin) *
+      (selectedIndex + 1 + (this.data.length - this.numberOfElementsShown))
+    }`;
 
-
-    // const activeElIndex = this.elementList.findIndex(
-    //   (el) => el && el.classList && el.classList.contains('active')
-    // );
-    // const translateValue = `${
-    //   (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin) *
-    //   (this.numberOfItemsShown - index - 1)
-    // }px`;
-
-    // this.elementList.forEach((element, itemInd) => {
-    //   const prop = gsap.getProperty(element, 'translateX');
-    //   if (prop < 0) {
-    //     gsap.to(element, {
-    //       duration: 0.5,
-    //       translateX: `${typeof prop === 'number' && (prop + (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin))}px`
-    //     });
-    //   } else {
-    //     gsap.to(element, {
-    //       duration: 0.5,
-    //       translateX: translateValue,
-    //     });
-    //   }
-    // });
-
-    // setTimeout(() => {
-    // // after 500 miliseconds move remaning half in negative
-    // for (let i = index + 1; i <= this.elementList.length - 1; i++) {
-    //   const prop2 = gsap.getProperty(this.elementList[i], 'translateX');
-    //   if (prop2 < 0) {
-    //     return;
-    //   } else {
-    //   gsap.to(this.elementList[i], {
-    //     duration: 0,
-    //     translateX: `-${(this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin) * (index + 1)}px`
-    //   });
-    // }
-    //   this.list.nativeElement.children[this.getActiveElement().activeElementIndex].classList.remove('active');
-    //   this.list.nativeElement.children[index].classList.add('active');
-    //   this.cdr.detectChanges();
-    //   }
-
-    // }, 500);
-
-
-
+    for (let i = selectedIndex + 1; i <= this.activeElement().elementIndex; i++) {
+      gsap.to(this.elementList[i], {
+        delay: 1.1,
+        duration: 0,
+        translateX: translateValue,
+      });
+    }
   }
 
-  /*
+  selectItem(index: number) {
+    this.removeSelectedElementAnimation();
 
-  */
-  goNext() {
-    // gsap.to(this.list.nativeElement.children[this.getActiveElement().activeElementIndex], {
-    //   height: this.dataListSizes.listItemHeight,
-    //   translateY: 0,
-    //   opacity: 0,
-    //   background: '#ccc'
-    // });
-    // gsap.to(this.list.nativeElement.children[this.getActiveElement().activeElementIndex - 1], {
-    //   height: 500,
-    //   translateY: '-210px',
-    //   background: '#1e1e1e',
-    // });
+    /* determining how far is the selected element from active element */
+    const translateValue = `${
+      (this.sizes.listItemWidth + this.sizes.listItemMargin) *
+      (this.activeElement().elementIndex - index)
+    }`;
 
+    /* We're clicking the element that's in the end of any array.
+       we need to manually call goNext() to stabilize elements
+       and reassign element-active */
+    if (this.activeElement().elementIndex < index) {
+      this.stabilizingElements.emit(true);
+      let translateIndex = -1;
 
-    const translateValue = (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin);
+      /* calculating translate index */
+      for (let i = index; i < this.data.length; i++) {
+        translateIndex++;
+      }
+      for (let j = 0; j <= this.activeElement().elementIndex; j++) {
+        translateIndex++;
+      }
+
+      this.goNext(true);
+      const int = setInterval(() => this.goNext(true), 1100);
+      setTimeout(() => {
+        clearInterval(int);
+        this.animateSelectedElement(index);
+      }, (translateIndex - 1) * 1100);
+      setTimeout(
+        () => this.stabilizingElements.emit(false),
+        translateIndex * 1000
+      );
+    } else {
+      this.animateSelectedElement(index);
+      this.btnDisabled.emit(true);
+      this.elementList.forEach((element) => {
+        const prop = gsap.getProperty(element, 'translateX');
+        if (prop < 0) {
+          gsap.to(element, {
+            duration: 1,
+            ease: Expo.easeInOut as any,
+            translateX: `${(prop as number) + parseInt(translateValue, 10)}px`,
+          });
+        } else {
+          gsap.to(element, {
+            duration: 1,
+            ease: Expo.easeInOut as any,
+            translateX: `${(prop as number) + parseInt(translateValue, 10)}px`,
+          });
+        }
+      });
+      this.moveElementsOpposite(index);
+      this.switchActiveElement({ selectedElementIndex: index });
+    }
+  }
+
+  private switchActiveElement({
+    selectedElementIndex,
+  }: {
+    selectedElementIndex: number;
+  }): void {
+    setTimeout(() => {
+      this.elementList[this.activeElement().elementIndex].classList.remove(
+        'element-active'
+      );
+      this.elementList[selectedElementIndex].classList.add('element-active');
+      this.btnDisabled.emit(false);
+    }, 1100);
+  }
+
+  goNext(stabilizing: boolean) {
+    if (!stabilizing) {
+      this.btnDisabled.emit(true);
+      this.removeSelectedElementAnimation();
+      if (this.activeElement().elementIndex === 0) {
+        this.animateSelectedElement(this.data.length - 1);
+      } else {
+        this.animateSelectedElement(this.activeElement().elementIndex - 1);
+      }
+    }
+
+    const translateValue = this.sizes.listItemWidth + this.sizes.listItemMargin;
     this.elementList.forEach((elem) => {
-      const prop = typeof gsap.getProperty(elem, 'translateX') === 'number' && gsap.getProperty(elem, 'translateX');
+      const prop = gsap.getProperty(elem, 'translateX');
       if (prop < 0) {
         // continue translating elements in negative position
         gsap.to(elem, {
-          duration: 0.5,
-          translateX: `${prop + translateValue}px`,
+          duration: 1,
+          translateX: `${(prop as number) + translateValue}px`,
+          ease: Expo.easeInOut as any,
           onComplete: () => {
-            // translate queued element to the beggining
-            gsap.to(this.translateElementQueue().activeElement, {
+            // translate active element to the beggining
+            gsap.to(this.activeElement().element, {
               duration: 0,
-              translateX: `-${translateValue
-                 * ((this.data.length - this.numberOfItemsShown) + this.translateElementQueue().activeElementIndex)}px`,
+              translateX: `-${
+                translateValue *
+                (this.data.length -
+                  this.numberOfElementsShown +
+                  this.activeElement().elementIndex)
+              }px`,
             });
-          }
+          },
         });
       } else {
         // translate elements in normal position
         gsap.to(elem, {
-          duration: 0.5,
-          translateX: `${prop + translateValue}px`,
+          duration: 1,
+          ease: Expo.easeInOut as any,
+          translateX: `${(prop as number) + translateValue}px`,
         });
       }
     });
-
-    this.changeTranslateElementQueue();
+    this.switchActiveElementNext(stabilizing);
   }
 
-
-  private changeTranslateElementQueue(): void {
+  private switchActiveElementNext(stabilizing: boolean): void {
     setTimeout(() => {
-      if (this.translateElementQueue().activeElementIndex === 0) {
-        // reset queued element to what it was initially
-        this.list.nativeElement.children[this.translateElementQueue().activeElementIndex].classList.remove('translate-queue');
-        this.list.nativeElement.children[this.data.length - 1].classList.add('translate-queue');
-        this.btnDisabled.emit(false);
+      if (this.activeElement().elementIndex === 0) {
+        // reset active element to what it was initially
+        this.elementList[this.activeElement().elementIndex].classList.remove(
+          'element-active'
+        );
+        this.elementList[this.data.length - 1].classList.add('element-active');
+        if (!stabilizing) {
+          this.btnDisabled.emit(false);
+        }
       } else {
-        // change queue
-        this.list.nativeElement.children[this.translateElementQueue().activeElementIndex - 1].classList.add('translate-queue');
-        this.list.nativeElement.children[this.translateElementQueue().activeElementIndex].classList.remove('translate-queue');
-        this.btnDisabled.emit(false);
+        // change active element
+        this.elementList[this.activeElement().elementIndex - 1].classList.add(
+          'element-active'
+        );
+        this.elementList[this.activeElement().elementIndex].classList.remove(
+          'element-active'
+        );
+        if (!stabilizing) {
+          this.btnDisabled.emit(false);
+        }
       }
       this.cdr.detectChanges();
-    }, 600);
-
+    }, 1100);
   }
 
   /**
    *  cast the HTMLCollection into an Array of HTMLElement
    */
   private get elementList(): HTMLElement[] {
-    if (this.listExists()) {
+    if (this.listExists) {
       return Array.prototype.slice.call(this.list.nativeElement.children);
     }
   }
-  public itemsToDisplay(itemCount: number): void {
+
+  public elementsToDisplay(elementCount: number): void {
     const calculatedWidth = `${
-      (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin) *
-      itemCount
+      (this.sizes.listItemWidth + this.sizes.listItemMargin) * elementCount
     }px`;
     this.calculatedWidth.emit(calculatedWidth);
     this.hostElement.nativeElement.style.width = calculatedWidth;
   }
-  private initializeTranslateQueue(): void {
-    if (!this.translateElementQueue().isActive) {
+
+  private initializeElements(): void {
+    if (!this.activeElement().element) {
       const element = this.elementList[this.data.length - 1] as HTMLElement;
       const translateValue = `-${
-        (this.dataListSizes.listItemWidth + this.dataListSizes.listItemMargin) *
-        (this.data.length - this.numberOfItemsShown)
+        (this.sizes.listItemWidth + this.sizes.listItemMargin) *
+        (this.data.length - this.numberOfElementsShown)
       }px`;
-      element.classList.add('translate-queue');
+      element.classList.add('element-active');
       this.elementList.forEach((el) =>
-        gsap.to(el, {
-          duration: 0,
-          translateX: translateValue,
-        })
+        gsap.to(el, { duration: 0, translateX: translateValue })
       );
-      // gsap.to(this.elementList[this.data.length - 1], {
-      //   height: 500,
-      //   translateY: '-210px'
-      // });
-
-    // gsap.to(this.translateElementQueue().activeElement, {
-    //   height: 500,
-    //   translateY: '-210px'
-    // });
-      // this.tl.to(element, {
-      //   duration: 0,
-      //   position: 'absolute',
-      //   bottom: 0,
-      //   right: 0,
-      // }).to(element, {
-      //   duration: 0.5,
-      //   height: 700,
-      // });
+      this.animateSelectedElement(this.data.length - 1);
     }
   }
-  private translateElementQueue(): { isActive: boolean; activeElement: HTMLElement, activeElementIndex: number } {
+  private activeElement(): {
+    element: HTMLElement;
+    elementIndex: number;
+  } {
     let obj: any = {
-       isActive: false,
-       activeElement: null,
-       activeElementIndex: null
+      element: null,
+      elementIndex: null,
     };
     this.elementList.forEach((node, ind) => {
-      if (node && node.classList) {
-       obj = {
-        ...obj,
-        isActive: node.classList.contains('translate-queue'),
-       };
-      }
-      if (node && node.classList && node.classList.contains('translate-queue')) {
+      if (node && node.classList && node.classList.contains('element-active')) {
         obj = {
           ...obj,
-          activeElement: node,
-          activeElementIndex: ind
+          element: node,
+          elementIndex: ind,
         };
       }
     });
     return obj;
   }
-  private listExists(): boolean {
+
+  private animateSelectedElement(index: number): void {
+    gsap.to(this.elementList[index], {
+      height: this.sizes.animationHeight,
+      duration: 1,
+      ease: Expo.easeInOut as any,
+      translateY: `-${
+        this.sizes.animationHeight -
+        (this.sizes.listItemWidth + this.sizes.listItemMargin)
+      }px`,
+    });
+  }
+
+  private removeSelectedElementAnimation(): void {
+    gsap.to(this.activeElement().element, {
+      height: this.sizes.listItemHeight,
+      duration: 1,
+      ease: Expo.easeInOut as any,
+      translateY: 0,
+    });
+  }
+
+  private get listExists(): boolean {
     return (
       this.list &&
       this.list.nativeElement &&
@@ -235,15 +297,10 @@ export class ReviewListComponent implements OnInit, AfterViewInit {
       this.list.nativeElement.childNodes.length > 0
     );
   }
-  private get dataListSizes() {
-    let sizes = {
-      containerWidth: null,
-      containerHeight: null,
-      listItemWidth: null,
-      listItemHeight: null,
-      listItemMargin: null,
-    };
-    if (this.listExists()) {
+
+  private get sizes(): Sizes {
+    let sizes = {} as Sizes;
+    if (this.listExists) {
       const dataList = this.list.nativeElement;
       sizes = {
         containerWidth: dataList.getBoundingClientRect().width,
@@ -257,9 +314,15 @@ export class ReviewListComponent implements OnInit, AfterViewInit {
           (dataList.childNodes[0] as HTMLDivElement).getBoundingClientRect()
             .height,
         listItemMargin: 40,
+        animationHeight: 650,
       };
     }
 
     return sizes;
+  }
+
+  ngOnDestroy() {
+    this.destroyed$.next();
+    this.destroyed$.complete();
   }
 }
