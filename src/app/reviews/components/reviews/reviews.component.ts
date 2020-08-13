@@ -108,6 +108,24 @@ export class ReviewsComponent implements OnInit {
             url:
               'https://images.unsplash.com/photo-1592739366177-d55cfbfe6a25?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1860&q=80',
           },
+          {
+            id: 13,
+            name: 'item 13',
+            url:
+              'https://images.unsplash.com/photo-1551692071-7a9253fd8907?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=934&q=80',
+          },
+          {
+            id: 14,
+            name: 'item 14',
+            url:
+              'https://images.unsplash.com/photo-1588098928842-715f1673f6b9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=934&q=80',
+          },
+          {
+            id: 15,
+            name: 'item 15',
+            url:
+              'https://images.unsplash.com/photo-1596992427002-b927ea70923a?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2170&q=80',
+          },
         ]);
       });
     });
