@@ -1,8 +1,9 @@
 <div class="reviews" [ngStyle]="{ width: calculatedWidth }">
   <div class="count-box">
     <span>
-      02 / {{ (data$ | async)?.length < 10 ? "0" : ""
-      }}{{ (data$ | async)?.length }}
+      {{ reviews?.currentIndex + 1 < 10 ? "0" : ""
+      }}{{ reviews?.currentIndex + 1 }} /
+      {{ (data$ | async)?.length < 10 ? "0" : "" }}{{ (data$ | async)?.length }}
     </span>
   </div>
   <div class="heading">

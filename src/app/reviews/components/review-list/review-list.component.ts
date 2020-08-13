@@ -29,6 +29,7 @@ export class ReviewListComponent implements OnInit, AfterViewInit, OnDestroy {
   /* we can manually change how many
      elements should be shown on page */
   numberOfElementsShown = 4;
+  currentIndex = 0;
 
   @Output() calculatedWidth = new EventEmitter<string>();
   @Output() btnDisabled = new EventEmitter<boolean>();
@@ -64,7 +65,11 @@ export class ReviewListComponent implements OnInit, AfterViewInit, OnDestroy {
       (selectedIndex + 1 + (this.data.length - this.numberOfElementsShown))
     }`;
 
-    for (let i = selectedIndex + 1; i <= this.activeElement().elementIndex; i++) {
+    for (
+      let i = selectedIndex + 1;
+      i <= this.activeElement().elementIndex;
+      i++
+    ) {
       gsap.to(this.elementList[i], {
         delay: 1.1,
         duration: 0,
@@ -74,6 +79,7 @@ export class ReviewListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   selectItem(index: number) {
+    this.increaseCurrentIndex(index);
     this.removeSelectedElementAnimation();
 
     /* determining how far is the selected element from active element */
@@ -319,6 +325,11 @@ export class ReviewListComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     return sizes;
+  }
+
+  public increaseCurrentIndex(index?: number): void {
+    this.currentIndex =
+      (index ? index + 1 : this.currentIndex + 1) % (this.data.length);
   }
 
   ngOnDestroy() {

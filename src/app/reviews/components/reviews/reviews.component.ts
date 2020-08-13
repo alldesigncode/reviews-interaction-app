@@ -12,7 +12,7 @@ export class ReviewsComponent implements OnInit {
   calculatedWidth: string;
   disabled: boolean;
   stabilizing: boolean;
-  @ViewChild(ReviewListComponent) revComponent: ReviewListComponent;
+  @ViewChild(ReviewListComponent) public reviews: ReviewListComponent;
 
   constructor(private cdr: ChangeDetectorRef) {}
 
@@ -26,7 +26,8 @@ export class ReviewsComponent implements OnInit {
   }
 
   public next(): void {
-    this.revComponent.goNext(false);
+    this.reviews.increaseCurrentIndex();
+    this.reviews.goNext(false);
   }
 
   public onDisabe = (event): void => (this.disabled = event);
