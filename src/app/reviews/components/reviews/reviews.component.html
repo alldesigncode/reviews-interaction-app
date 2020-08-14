@@ -1,8 +1,10 @@
 <div class="reviews" [ngStyle]="{ width: calculatedWidth }">
   <div class="count-box">
+    <span #count>
+      {{ currentIndex + 1 < 10 ? "0" : "" }}{{ currentIndex + 1 }}</span
+    >
     <span>
-      {{ reviews?.currentIndex + 1 < 10 ? "0" : ""
-      }}{{ reviews?.currentIndex + 1 }} /
+      /
       {{ (data$ | async)?.length < 10 ? "0" : "" }}{{ (data$ | async)?.length }}
     </span>
   </div>
@@ -12,13 +14,20 @@
   <ng-container *ngIf="data$ | async as data">
     <rv-review-list
       [data]="data"
+      (currentIndexChanged)="indexChanged($event)"
       (calculatedWidth)="onCalculatedWidth($event)"
       (stabilizingElements)="onStabilize($event)"
       (btnDisabled)="onDisabe($event)"
     ></rv-review-list>
   </ng-container>
 </div>
-<div class="detail"></div>
+<div class="detail">
+  <rv-review [dataLength]="(data$ | async)?.length"></rv-review>
+</div>
 <div class="actions">
-  <button (click)="next()" [disabled]="disabled || stabilizing">next</button>
+  <button (click)="next()" [disabled]="disabled || stabilizing">
+    <svg class="icon icon-next">
+      <use href="./assets/icon.svg#icon-chevron-right"></use>
+    </svg>
+  </button>
 </div>

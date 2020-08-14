@@ -7,10 +7,10 @@
       [ngStyle]="(disabled || stabilizing) && { pointerEvents: 'none' }"
     >
       <ng-container *ngIf="item.url">
-        <img src="{{item.url}}" alt="">
+        <img src="{{ item.url }}" alt="" />
       </ng-container>
       <figcaption class="list__item--text">
-        {{ item.name }}
+        <p>{{ item.name }}</p>
       </figcaption>
     </figure>
   </ng-container>
