@@ -9,18 +9,22 @@ import {
   EventEmitter,
   ChangeDetectorRef,
   OnDestroy,
+  OnChanges,
+  SimpleChange,
 } from '@angular/core';
 import { gsap, Expo } from 'gsap';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Sizes } from '../../models/sizes';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'rv-review-list',
   templateUrl: './review-list.component.html',
   styleUrls: ['./review-list.component.scss'],
 })
-export class ReviewListComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ReviewListComponent
+  implements OnInit, AfterViewInit, OnChanges, OnDestroy {
   destroyed$ = new Subject<void>();
   @ViewChild('list', { static: true }) list: ElementRef<HTMLDivElement>;
   disabled = false;
@@ -29,7 +33,9 @@ export class ReviewListComponent implements OnInit, AfterViewInit, OnDestroy {
   /* we can manually change how many
      elements should be shown on page */
   numberOfElementsShown = 4;
+  currentIndex = 0;
 
+  @Output() currentIndexChanged = new EventEmitter<number>();
   @Output() calculatedWidth = new EventEmitter<string>();
   @Output() btnDisabled = new EventEmitter<boolean>();
   @Output() stabilizingElements = new EventEmitter<boolean>();
@@ -40,6 +46,13 @@ export class ReviewListComponent implements OnInit, AfterViewInit, OnDestroy {
     private hostElement: ElementRef<HTMLElement>,
     private cdr: ChangeDetectorRef
   ) {}
+
+  ngOnChanges({ data }: { data: SimpleChange }) {
+    if (Array.isArray(data.currentValue)) {
+      this.currentIndex = data.currentValue.length;
+      this.increaseCurrentIndex();
+    }
+  }
 
   ngOnInit(): void {
     this.btnDisabled
@@ -64,7 +77,11 @@ export class ReviewListComponent implements OnInit, AfterViewInit, OnDestroy {
       (selectedIndex + 1 + (this.data.length - this.numberOfElementsShown))
     }`;
 
-    for (let i = selectedIndex + 1; i <= this.activeElement().elementIndex; i++) {
+    for (
+      let i = selectedIndex + 1;
+      i <= this.activeElement().elementIndex;
+      i++
+    ) {
       gsap.to(this.elementList[i], {
         delay: 1.1,
         duration: 0,
@@ -74,6 +91,7 @@ export class ReviewListComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   selectItem(index: number) {
+    this.increaseCurrentIndex(index);
     this.removeSelectedElementAnimation();
 
     /* determining how far is the selected element from active element */
@@ -234,6 +252,16 @@ export class ReviewListComponent implements OnInit, AfterViewInit, OnDestroy {
     this.hostElement.nativeElement.style.width = calculatedWidth;
   }
 
+  public increaseCurrentIndex(index?: number): void {
+    if (this.currentIndex === 0) {
+      this.currentIndex = this.data.length;
+    }
+
+    this.currentIndex =
+      (index ? index : this.currentIndex - 1) % this.data.length;
+    this.currentIndexChanged.emit(this.currentIndex);
+  }
+
   private initializeElements(): void {
     if (!this.activeElement().element) {
       const element = this.elementList[this.data.length - 1] as HTMLElement;
@@ -314,7 +342,7 @@ export class ReviewListComponent implements OnInit, AfterViewInit, OnDestroy {
           (dataList.childNodes[0] as HTMLDivElement).getBoundingClientRect()
             .height,
         listItemMargin: 40,
-        animationHeight: 650,
+        animationHeight: 730,
       };
     }
 

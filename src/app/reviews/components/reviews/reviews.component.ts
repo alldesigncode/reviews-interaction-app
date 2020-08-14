@@ -1,7 +1,15 @@
-import { Component, OnInit, ChangeDetectorRef, ViewChild } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  ChangeDetectorRef,
+  ViewChild,
+  ElementRef,
+} from '@angular/core';
 import { Observable } from 'rxjs';
 import { ReviewListComponent } from '../review-list/review-list.component';
-
+import { gsap, Expo } from 'gsap';
+import { DataService } from '../../services/data.service';
+import { ReviewComponent } from '../review/review.component';
 @Component({
   selector: 'rv-reviews',
   templateUrl: './reviews.component.html',
@@ -12,12 +20,18 @@ export class ReviewsComponent implements OnInit {
   calculatedWidth: string;
   disabled: boolean;
   stabilizing: boolean;
-  @ViewChild(ReviewListComponent) revComponent: ReviewListComponent;
+  currentIndex = 0;
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  @ViewChild('count', { static: true }) count: ElementRef;
+  @ViewChild(ReviewListComponent) public reviews: ReviewListComponent;
+  @ViewChild(ReviewComponent) public review: ReviewComponent;
+
+  tl = gsap.timeline();
+
+  constructor(private cdr: ChangeDetectorRef, private data: DataService) {}
 
   ngOnInit(): void {
-    this.data$ = this.getMockData();
+    this.data$ = this.data.getMockData();
   }
 
   public onCalculatedWidth(width: string): void {
@@ -26,108 +40,38 @@ export class ReviewsComponent implements OnInit {
   }
 
   public next(): void {
-    this.revComponent.goNext(false);
+    this.reviews.increaseCurrentIndex();
+    this.reviews.goNext(false);
   }
 
+  public indexChanged(event) {
+    if (this.review) {
+      this.review.animate();
+    }
+    this.tl
+      .to(this.count.nativeElement, {
+        delay: 0.2,
+        duration: 0.3,
+        y: 5,
+        opacity: 0,
+        ease: Expo.easeInOut as any,
+      })
+      .to(this.count.nativeElement, {
+        duration: 0,
+        y: -10,
+        onComplete: () => {
+          this.currentIndex = event;
+          this.review.getElement(event + 1);
+          this.cdr.detectChanges();
+          gsap.to(this.count.nativeElement, {
+            duration: 0.3,
+            y: 0,
+            opacity: 1,
+            ease: Expo.easeInOut as any,
+          });
+        },
+      });
+  }
   public onDisabe = (event): void => (this.disabled = event);
   public onStabilize = (event): void => (this.stabilizing = event);
-
-  private getMockData(): Observable<any[]> {
-    return new Observable((observer) => {
-      setTimeout(() => {
-        return observer.next([
-          {
-            id: 1,
-            name: 'item 1',
-            url:
-              'https://images.unsplash.com/photo-1597065298197-7f3e5bed173d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=3233&q=80',
-          },
-          {
-            id: 2,
-            name: 'item 2',
-            url:
-              'https://images.unsplash.com/photo-1597147067031-ccbf8e66f722?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2108&q=80',
-          },
-          {
-            id: 3,
-            name: 'item 3',
-            url:
-              'https://images.unsplash.com/photo-1597077864840-44f0d85011a6?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=934&q=80',
-          },
-          {
-            id: 4,
-            name: 'item 4',
-            url:
-              'https://images.unsplash.com/photo-1597132708057-f7f57aefd651?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1000&q=80',
-          },
-          {
-            id: 5,
-            name: 'item 5',
-            url:
-              'https://images.unsplash.com/photo-1597067352482-f913dd817ac5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=934&q=80',
-          },
-          {
-            id: 6,
-            name: 'item 6',
-            url:
-              'https://images.unsplash.com/photo-1596953814369-a2cde05939e3?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=975&q=80',
-          },
-          {
-            id: 7,
-            name: 'item 7',
-            url:
-              'https://images.unsplash.com/photo-1571624762224-e58ef9009a12?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=975&q=80',
-          },
-          {
-            id: 8,
-            name: 'item 8',
-            url:
-              'https://images.unsplash.com/photo-1596981051311-491388a29427?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2100&q=80',
-          },
-          {
-            id: 9,
-            name: 'item 9',
-            url:
-              'https://images.unsplash.com/photo-1597054279937-0085a9af70d1?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=934&q=80',
-          },
-          {
-            id: 10,
-            name: 'item 10',
-            url:
-              'https://images.unsplash.com/photo-1497582114636-bea95b4c8f53?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=934&q=80',
-          },
-          {
-            id: 11,
-            name: 'item 11',
-            url:
-              'https://images.unsplash.com/photo-1583942136480-1568b5b2afe6?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=934&q=80',
-          },
-          {
-            id: 12,
-            name: 'item 12',
-            url:
-              'https://images.unsplash.com/photo-1592739366177-d55cfbfe6a25?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=1860&q=80',
-          },
-          {
-            id: 13,
-            name: 'item 13',
-            url:
-              'https://images.unsplash.com/photo-1551692071-7a9253fd8907?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=934&q=80',
-          },
-          {
-            id: 14,
-            name: 'item 14',
-            url:
-              'https://images.unsplash.com/photo-1588098928842-715f1673f6b9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=934&q=80',
-          },
-          {
-            id: 15,
-            name: 'item 15',
-            url:
-              'https://images.unsplash.com/photo-1596992427002-b927ea70923a?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=2170&q=80',
-          },
-        ]);
-      });
-    });
-  }
 }
