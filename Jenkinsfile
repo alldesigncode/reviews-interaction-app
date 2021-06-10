@@ -1,8 +1,4 @@
-pipeline {
-  agent any
-
-  tools {nodejs "nodejs"}
-
+node {
   stage('Checkout SCM') {
     git branch: 'master', url: 'https://github.com/bekamais/reviews-interaction-app.git'
   }
