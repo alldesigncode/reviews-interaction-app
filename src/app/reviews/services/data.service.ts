@@ -128,8 +128,6 @@ export class DataService {
     },
   ];
 
-  constructor() {}
-
   public getMockData(): Observable<any[]> {
     return new Observable((observer) => observer.next(this.data.slice()));
   }

@@ -1,7 +1,7 @@
-  <div class="heading" #heading>
-    <div class="heading-1">{{(data$ | async)?.name}}</div>
-    <div class="heading-2">{{(data$ | async)?.category}}</div>
-  </div>
-  <div class="content" #content>
-    <p>{{(data$ | async)?.desc}}</p>
-  </div>
+<div class="heading" #heading>
+  <div class="heading-1">{{ (data$ | async)?.name }}</div>
+  <div class="heading-2">{{ (data$ | async)?.category }}</div>
+</div>
+<div class="content" #content>
+  <p>{{ (data$ | async)?.desc }}</p>
+</div>

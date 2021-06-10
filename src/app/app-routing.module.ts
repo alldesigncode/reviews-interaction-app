@@ -5,8 +5,8 @@ const routes: Routes = [
   {
     path: '',
     redirectTo: 'reviews',
-    pathMatch: 'full'
-  }
+    pathMatch: 'full',
+  },
 ];
 
 @NgModule({

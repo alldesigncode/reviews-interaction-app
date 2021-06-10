@@ -2,15 +2,14 @@
   <ng-container *ngFor="let item of data; let i = index">
     <figure
       class="list__item"
-      #itemRef
       (click)="selectItem(i)"
-      [ngStyle]="(disabled || stabilizing) && { pointerEvents: 'none' }"
+      [ngStyle]="(disabeld || stabilizing) && { pointerEvents: 'none' }"
     >
       <ng-container *ngIf="item.url">
         <img src="{{ item.url }}" alt="" />
       </ng-container>
       <figcaption class="list__item--text">
-        <p>{{ item.name }}</p>
+        {{ item.name }}
       </figcaption>
     </figure>
   </ng-container>

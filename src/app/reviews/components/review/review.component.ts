@@ -6,9 +6,9 @@ import {
   Input,
   OnChanges,
 } from '@angular/core';
+import { gsap, Expo } from 'gsap';
 import { DataService } from '../../services/data.service';
 import { Observable } from 'rxjs';
-import { gsap, Expo } from 'gsap';
 
 @Component({
   selector: 'rv-review',
@@ -16,15 +16,16 @@ import { gsap, Expo } from 'gsap';
   styleUrls: ['./review.component.scss'],
 })
 export class ReviewComponent implements OnInit, OnChanges {
+  data$: Observable<any>;
   @ViewChild('heading', { static: true }) heading: ElementRef;
   @ViewChild('content', { static: true }) content: ElementRef;
-  tl = gsap.timeline();
-  tl2 = gsap.timeline();
-  public data$: Observable<any>;
 
   @Input() dataLength: number;
 
-  constructor(private dataSerice: DataService) {}
+  tl = gsap.timeline();
+  tl2 = gsap.timeline();
+
+  constructor(private dataService: DataService) {}
 
   ngOnInit(): void {}
 
@@ -33,14 +34,18 @@ export class ReviewComponent implements OnInit, OnChanges {
     this.animate();
   }
 
-  public animate() {
+  getElement(id) {
+    this.data$ = this.dataService.getMockDataById(id);
+  }
+
+  public animate(): void {
     if (this.elementsExist) {
       this.tl2
         .to(this.heading.nativeElement, {
           duration: 0.5,
           y: 5,
           opacity: 0,
-          ease: Expo.easeInOut as any,
+          ease: Expo.easeInOut,
         })
         .to(this.heading.nativeElement, {
           duration: 0,
@@ -54,7 +59,6 @@ export class ReviewComponent implements OnInit, OnChanges {
             });
           },
         });
-
       this.tl
         .to(this.content.nativeElement, {
           delay: 0.1,
@@ -76,10 +80,6 @@ export class ReviewComponent implements OnInit, OnChanges {
           },
         });
     }
-  }
-
-  public getElement(id) {
-    this.data$ = this.dataSerice.getMockDataById(id);
   }
 
   private get elementsExist() {

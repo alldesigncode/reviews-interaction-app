@@ -1,4 +1,3 @@
-
 export interface Sizes {
   containerWidth: number;
   containerHeight: number;
