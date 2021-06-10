@@ -5,19 +5,27 @@ pipeline {
 
   stages {
     stage('Checkout SCM') {
-      git branch: 'master', url: 'https://github.com/bekamais/reviews-interaction-app.git'
+      steps {
+        git branch: 'master', url: 'https://github.com/bekamais/reviews-interaction-app.git'
+      }
     }
 
     stage('Install node modules') {
-      sh "npm install"
+      steps {
+        sh "npm install"
+      }
     }
 
     stage('Test') {
-      sh "npm run build --prod"
+      steps {
+        sh "npm run build --prod"
+      }
     }
 
     stage('build') {
-      sh "npm run build --prod"
+      steps {
+        sh "npm run build --prod"
+      }
     }
   }
 }
