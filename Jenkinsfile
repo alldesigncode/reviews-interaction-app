@@ -1,4 +1,6 @@
 node {
+  tools {nodejs "nodejs"}
+
   stage('Checkout SCM') {
     git branch: 'master', url: 'https://github.com/bekamais/reviews-interaction-app.git'
   }
